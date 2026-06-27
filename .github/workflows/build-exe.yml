@@ -45,11 +45,11 @@ jobs:
           }
           Write-Host "所有资源文件校验通过"
 
-      - name: Nuitka 全参数优化打包（含UPX压缩）
+      - name: Nuitka 打包（含UPX压缩）
         run: |
           nuitka --onefile `
             --mingw64 `
-            --enable-upx `
+            --upx=upx.exe `
             --upx-exclude=python312.dll `
             --nofollow-import-to=tkinter `
             --nofollow-import-to=unittest `
