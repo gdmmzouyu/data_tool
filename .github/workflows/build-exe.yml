@@ -45,10 +45,12 @@ jobs:
           }
           Write-Host "所有资源文件校验通过"
 
-      - name: Nuitka 全参数优化打包
+      - name: Nuitka 全参数优化打包（含UPX压缩）
         run: |
           nuitka --onefile `
             --mingw64 `
+            --enable-upx `
+            --upx-exclude=python312.dll `
             --nofollow-import-to=tkinter `
             --nofollow-import-to=unittest `
             --nofollow-import-to=distutils `
@@ -62,8 +64,6 @@ jobs:
             --include-module=requests `
             --include-data-files=./master.key=master.key `
             --include-data-dir=./extensions=extensions `
-            --upx-bin=upx.exe `
-            --upx-exclude=python312.dll `
             --output-dir=dist `
             --output-filename=DataTool.exe `
             main.py
