@@ -1,12 +1,12 @@
 name: 打包Windows EXE
 on:
   push:
-    branches: [ main ]    # 提交到main分支自动触发打包
-  workflow_dispatch:      # 支持手动触发打包，调试必备
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: windows-latest  # 微软官方Windows服务器构建
+    runs-on: windows-latest
     steps:
       - name: 拉取项目代码
         uses: actions/checkout@v4
@@ -14,30 +14,54 @@ jobs:
       - name: 配置Python环境
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'   # 建议用3.12稳定版，3.14部分依赖兼容可能有问题
+          python-version: '3.12'
           architecture: 'x64'
-          cache: 'pip'      # 缓存依赖，第二次打包速度翻倍
+          cache: 'pip'
 
       - name: 安装 MinGW 编译器 + UPX 压缩工具
         run: |
-          choco install mingw -y  # 原配置漏了！--mingw64 必须依赖MinGW
+          choco install mingw -y
           choco install upx -y
+          $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 
       - name: 安装项目依赖与Nuitka
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install nuitka==2.4.8  # 固定版本避免Nuitka自身更新导致编译失败
+          pip install nuitka==2.4.8
+
+      - name: 自动下载 DuckDB 扩展
+        run: python download_ext.py
+
+      - name: 打包前置校验
+        run: |
+          if (-not (Test-Path "master.key")) {
+            Write-Host "找不到 master.key 密钥文件"
+            exit 1
+          }
+          if (-not (Test-Path "extensions\excel.duckdb_extension")) {
+            Write-Host "找不到 DuckDB 扩展文件"
+            exit 1
+          }
+          Write-Host "所有资源文件校验通过"
 
       - name: Nuitka 全参数优化打包
         run: |
           nuitka --onefile `
-            --lto=yes `
             --mingw64 `
             --no-debug `
             --no-assertions `
-            --nofollow-import-to=tkinter,unittest,distutils,test `
-            --include-module=duckdb,cryptography,openpyxl,pyarrow,chardet,psutil,requests `
+            --nofollow-import-to=tkinter `
+            --nofollow-import-to=unittest `
+            --nofollow-import-to=distutils `
+            --nofollow-import-to=test `
+            --include-module=duckdb `
+            --include-module=cryptography `
+            --include-module=openpyxl `
+            --include-module=pyarrow `
+            --include-module=chardet `
+            --include-module=psutil `
+            --include-module=requests `
             --include-data-files=./master.key=master.key `
             --include-data-dir=./extensions=extensions `
             --upx-bin=upx.exe `
