@@ -49,8 +49,6 @@ jobs:
         run: |
           nuitka --onefile `
             --mingw64 `
-            --no-debug `
-            --no-assertions `
             --nofollow-import-to=tkinter `
             --nofollow-import-to=unittest `
             --nofollow-import-to=distutils `
