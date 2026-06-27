@@ -49,6 +49,7 @@ jobs:
         run: |
           nuitka --onefile `
             --mingw64 `
+            --assume-yes-for-downloads `
             --nofollow-import-to=tkinter `
             --nofollow-import-to=unittest `
             --nofollow-import-to=distutils `
@@ -65,9 +66,6 @@ jobs:
             --output-dir=dist `
             --output-filename=DataTool.exe `
             main.py
-
-      - name: UPX 压缩EXE体积
-        run: upx --best --lzma dist\DataTool.exe
 
       - name: 上传打包产物
         uses: actions/upload-artifact@v4
